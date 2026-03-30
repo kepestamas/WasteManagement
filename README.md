@@ -7,7 +7,7 @@
 
 ## 🎯 Project Mission
 Most cities still collect trash based on the day of the week, not the volume of the waste. This leads to inefficient fuel consumption, unnecessary noise pollution, and overflowing bins. **WasteManagement** aims to provide the analytical backbone to:
-* **Quantify** the carbon footprint of current collection routes.
+* **Quantify** the environmental damage caused by current collection routes.
 * **Simulate** the impact of IoT-enabled smart bins.
 * **Optimize** logistics based on real-time fill-rate predictions.
 
@@ -27,6 +27,6 @@ The project is structured into three distinct layers to ensure city-by-city adap
 
 ## 🤝 Collaboration & Contribution
 
-This code is created under the HUB Român de Inteligență Artificială – HRIA project, in the research thematic: "Teoria jocurilor, Ai Explicabilă și Optimizare: aplicații Smart to Green pentru eco-orașe inteligente" translating to "Game theory, explainable Ai and Optimization: smart-to-green applications for intelligent eco-cities".
+This code is created under the HUB Român de Inteligență Artificială – HRIA project, in the research thematic: _Teoria jocurilor, Ai Explicabilă și Optimizare: aplicații Smart to Green pentru eco-orașe inteligente_ translating to _Game theory, explainable Ai and Optimization: smart-to-green applications for intelligent eco-cities_.
 
 ---
