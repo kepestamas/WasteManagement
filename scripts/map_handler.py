@@ -4,6 +4,8 @@ import networkx as nx
 import numpy as np
 from scipy.spatial import Delaunay
 import random
+import geopandas as gpd
+from shapely.geometry import Point, LineString
 
 
 
@@ -117,9 +119,87 @@ def generate_fictive_city(num_nodes=500, num_edges=700, center_lat=40.7, center_
     return G
 
 
+
+def generate_smart_bins(G, num_bins=150):
+    """
+    Generates fictional waste bins along the edges of the given graph.
+    Returns a GeoDataFrame of the bins.
+    """
+    # 1. Convert the graph edges into a GeoDataFrame to access their geometries
+    nodes, edges = ox.graph_to_gdfs(G)
+    
+    bins_data = []
+    
+    # 2. Iterate to create bins
+    for i in range(num_bins):
+        # Pick a random street (edge) to place the bin on
+        # edges.index is a tuple of (u, v, key)
+        random_edge_idx = random.choice(edges.index)
+        
+        # Get the geometric shape (LineString) of that street
+        edge_geom = edges.loc[random_edge_idx, 'geometry']
+        
+        # 3. Place the bin somewhere along that street
+        # normalized=True means 0.0 is the start of the street, 1.0 is the end
+        position_along_street = random.uniform(0.05, 0.95) 
+        bin_point = edge_geom.interpolate(position_along_street, normalized=True)
+        
+        # 4. Generate Simulation Data
+        fullness = np.random.randint(0, 100) # 0% to 100% full
+        sensor_status = "active" if random.random() > 0.05 else "offline" # 5% chance of broken sensor
+        
+        # 5. Store the data, explicitly linking it to the street network
+        bins_data.append({
+            'bin_id': f"BIN-{str(i).zfill(4)}",
+            'geometry': bin_point,
+            'edge_u': random_edge_idx[0],  # The start node of the street
+            'edge_v': random_edge_idx[1],  # The end node of the street
+            'fullness_pct': fullness,
+            'sensor_status': sensor_status,
+            'capacity_liters': random.choice([120, 240, 1100])
+        })
+        
+    # Convert the list of dictionaries into a GeoDataFrame
+    bins_gdf = gpd.GeoDataFrame(bins_data, crs=G.graph['crs'])
+    return bins_gdf
+
+def plot_city_with_bins(G, bins_gdf):
+    """
+    Plots the street network and overlays the waste bins, 
+    color-coded by how full they are.
+    """
+    # 1. Plot the base street network (capture the figure and axis)
+    fig, ax = ox.plot_graph(
+        G, 
+        show=False, 
+        close=False, 
+        node_size=0,         # Hide the intersection nodes for a cleaner look
+        edge_color="#333333", 
+        edge_linewidth=0.5,
+        bgcolor="white"
+    )
+    
+    # 2. Filter bins by fullness for color coding
+    critical_bins = bins_gdf[bins_gdf['fullness_pct'] >= 80]
+    medium_bins = bins_gdf[(bins_gdf['fullness_pct'] >= 40) & (bins_gdf['fullness_pct'] < 80)]
+    empty_bins = bins_gdf[bins_gdf['fullness_pct'] < 40]
+    
+    # 3. Plot the bins on top of the same axis (`ax=ax`)
+    empty_bins.plot(ax=ax, color='green', markersize=10, alpha=0.6, label='< 40% Full')
+    medium_bins.plot(ax=ax, color='orange', markersize=15, alpha=0.8, label='40-80% Full')
+    critical_bins.plot(ax=ax, color='red', markersize=25, alpha=1.0, label='> 80% Full (Needs Pickup)')
+    
+    # 4. Add a legend and show
+    plt.title("Smart City Waste Management: Real-Time Bin Status", fontsize=14)
+    plt.legend(loc="upper left")
+    plt.show()
+
+
 if __name__=="__main__":
-    city_name = "Budapest"
+    city_name = "Cluj-Napoca"
     network_type = "drive_service"
 
-    generate_graph_from_osm(city_name=city_name, network_type=network_type, is_projected=True, should_plot=True)
-    # generate_fictive_city(should_plot=True, num_edges=800)
+    G = generate_graph_from_osm(city_name=city_name, network_type=network_type, is_projected=False, should_plot=False)
+    # G = generate_fictive_city(should_plot=True, num_edges=800)
+    bins_gdf = generate_smart_bins(G)
+    plot_city_with_bins(G, bins_gdf)
